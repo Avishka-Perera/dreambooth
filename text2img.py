@@ -23,7 +23,7 @@ def parse_args():
         help="Number of variations to be generated",
     )
     parser.add_argument(
-        "-o", "--output-dir", default="out", help="Directory to save outputs"
+        "-o", "--output-dir", default="out/txt2img", help="Directory to save outputs"
     )
     parser.add_argument(
         "--precision",
