@@ -1,0 +1,16 @@
+name: sd
+channels:
+    - defaults
+dependencies:
+    - python=3.10
+    - pip=23.3.1
+    - pip:
+          - ipykernel
+          - ipywidgets
+          - torch
+          - torchvision
+          - omegaconf
+          - transformers
+          - pytorch-lightning
+          - einops
+          - taming-transformers
