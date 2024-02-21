@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import torch
 from src.util import instantiate_from_config
 from omegaconf import OmegaConf
-from src.plms import PLMSSampler
+from src.samplers import PLMSSampler
 import os
 import numpy as np
 from torch import autocast

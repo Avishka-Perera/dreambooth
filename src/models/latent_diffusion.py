@@ -9,7 +9,9 @@ from ..util import (
     default,
     instantiate_from_config,
     mean_flat,
-    log_txt_as_img,ismap, isimage
+    log_txt_as_img,
+    ismap,
+    isimage,
 )
 from ..util.diffusionmodules import make_beta_schedule, extract_into_tensor, noise_like
 from ..distributions import DiagonalGaussianDistribution, normal_kl
@@ -23,17 +25,17 @@ from torchvision.utils import make_grid
 from pytorch_lightning.utilities import rank_zero_only
 from .autoencoder import VQModelInterface, AutoencoderKL, IdentityFirstStage
 from torch import clamp
-from .diffusionmodules import DDIMSampler
+from ..samplers import DDIMSampler
 from torch.optim.lr_scheduler import LambdaLR
 
-__conditioning_keys__ = {'concat': 'c_concat',
-                         'crossattn': 'c_crossattn',
-                         'adm': 'y'}
+__conditioning_keys__ = {"concat": "c_concat", "crossattn": "c_crossattn", "adm": "y"}
+
 
 def disabled_train(self, mode=True):
     """Overwrite model.train with this function to make sure train/eval mode
     does not change anymore."""
     return self
+
 
 class DDPM(pl.LightningModule):
     # classic DDPM with Gaussian diffusion, in image space
