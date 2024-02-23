@@ -51,6 +51,12 @@ def load_img(path):
 
 
 def export_imgs(imgs: np.ndarray, dir: str) -> None:
-    for i in range(len(imgs)):
+    existing_numbers = [int(os.path.splitext(f)[0]) for f in os.listdir(dir)]
+    if len(existing_numbers) > 0:
+        start = max(existing_numbers) + 1
+    else:
+        start = 0
+
+    for i in range(start, start + len(imgs)):
         im = Image.fromarray(imgs[i])
         im.save(os.path.join(dir, f"{i:04}.jpg"))

@@ -1,12 +1,10 @@
 from argparse import ArgumentParser
-import torch
-from src.util.io import get_output_path, load_model_from_config, export_imgs
+from src.util.io import get_output_path, load_model_from_config
+from src.util.diffusion import sample_to_dir
 from omegaconf import OmegaConf
 from src.samplers import PLMSSampler
 import os
-import numpy as np
-from torch import autocast
-from contextlib import nullcontext
+import ast
 
 
 def parse_args():
@@ -14,6 +12,13 @@ def parse_args():
 
     parser.add_argument(
         "-p", "--prompt", type=str, required=True, help="Prompt to convert to image"
+    )
+    parser.add_argument(
+        "-b",
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Generation batch size",
     )
     parser.add_argument(
         "-v",
@@ -31,6 +36,33 @@ def parse_args():
         help="evaluate at this precision",
         choices=["full", "autocast"],
         default="autocast",
+    )
+
+    # generation parameters
+    parser.add_argument(
+        "--hw",
+        type=ast.literal_eval,
+        nargs="+",
+        help="Height and the Width of the required image",
+        default=[512, 512],
+    )
+    parser.add_argument(
+        "--ddim-steps",
+        type=int,
+        default=50,
+        help="",
+    )
+    parser.add_argument(
+        "--scale",
+        type=float,
+        default=7.5,
+        help="",
+    )
+    parser.add_argument(
+        "--ddim-eta",
+        type=float,
+        default=0,
+        help="",
     )
 
     return parser.parse_args()
@@ -52,49 +84,18 @@ def main(args):
     model = load_model_from_config(config, model_path)
     sampler = PLMSSampler(model)
 
-    data = [args.prompt] * args.variations
-
-    C = 4
-    H = 512
-    W = 512
-    f = 8
-    ddim_steps = 50
-    scale = 7.5
-    ddim_eta = 0
-    start_code = None
-    batch_size = len(data)
-
-    precision_scope = autocast if args.precision == "autocast" else nullcontext
-    with torch.no_grad():
-        with precision_scope("cuda"):
-            with model.ema_scope():
-                c = model.get_learned_conditioning(data)
-                uc = None
-                if scale != 1.0:
-                    uc = model.get_learned_conditioning(batch_size * [""])
-
-                shape = [C, H // f, W // f]
-                samples_ddim, _ = sampler.sample(
-                    S=ddim_steps,
-                    conditioning=c,
-                    batch_size=batch_size,
-                    shape=shape,
-                    verbose=False,
-                    unconditional_guidance_scale=scale,
-                    unconditional_conditioning=uc,
-                    eta=ddim_eta,
-                    x_T=start_code,
-                )
-
-                x_samples_ddim = model.decode_first_stage(samples_ddim)
-                x_samples_ddim = torch.clamp(
-                    (x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0
-                )
-                x_samples_ddim = (
-                    x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy() * 255
-                ).astype(np.uint8)
-
-    export_imgs(x_samples_ddim, samples_dir)
+    sample_to_dir(
+        sampler,
+        args.prompt,
+        samples_dir,
+        args.hw,
+        args.ddim_steps,
+        args.scale,
+        args.ddim_eta,
+        args.batch_size if args.batch_size is not None else args.variations,
+        args.variations,
+        args.precision,
+    )
 
 
 if __name__ == "__main__":
