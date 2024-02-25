@@ -62,7 +62,7 @@ def main(args):
 
     device = torch.device("cuda")
 
-    output_dir = get_output_path(args.output_dir, "inf")
+    output_dir = get_output_path(args.output_dir, "run")
     samples_dir = os.path.join(output_dir, "samples")
     os.makedirs(samples_dir, exist_ok=True)
 

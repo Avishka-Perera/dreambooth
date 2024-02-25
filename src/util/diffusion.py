@@ -21,6 +21,7 @@ def txt2img(
     variations,
     precision,
 ):
+    verbose = rank == 0
 
     start_idx = int(variations / world_size * rank)
     variations = (
@@ -40,7 +41,7 @@ def txt2img(
     model_path = "weights/model.ckpt"
 
     config = OmegaConf.load(config_path)
-    model = load_model_from_config(config, model_path)
+    model = load_model_from_config(config, model_path, verbose)
     model.cuda(rank)
     model.cond_stage_model.device = rank
     sampler = PLMSSampler(model)
@@ -74,7 +75,7 @@ def txt2img(
                         conditioning=c,
                         batch_size=local_batch_size,
                         shape=shape,
-                        verbose=False,
+                        verbose=verbose,
                         unconditional_guidance_scale=scale,
                         unconditional_conditioning=uc,
                         eta=ddim_eta,

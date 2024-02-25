@@ -3,6 +3,9 @@ import torch
 from PIL import Image
 from .util import instantiate_from_config
 import os
+import sys
+from io import StringIO
+from contextlib import nullcontext
 
 
 def get_output_path(root: str, lead: str):
@@ -19,12 +22,17 @@ def get_output_path(root: str, lead: str):
 
 
 def load_model_from_config(config, ckpt, verbose=False):
-    print(f"Loading model from {ckpt}")
+    if verbose:
+        print(f"Loading model from {ckpt}")
     pl_sd = torch.load(ckpt, map_location="cpu")
-    if "global_step" in pl_sd:
+    if "global_step" in pl_sd and verbose:
         print(f"Global Step: {pl_sd['global_step']}")
     sd = pl_sd["state_dict"]
-    model = instantiate_from_config(config.model)
+
+    context = nullcontext if verbose else PrintSuppressContext
+    with context():
+        model = instantiate_from_config(config.model)
+
     m, u = model.load_state_dict(sd, strict=False)
     if len(m) > 0 and verbose:
         print("missing keys:")
@@ -54,3 +62,15 @@ def export_imgs(imgs: np.ndarray, dir: str, start: int = 0) -> None:
     for i in range(len(imgs)):
         im = Image.fromarray(imgs[i])
         im.save(os.path.join(dir, f"{i+start:04}.jpg"))
+
+
+class PrintSuppressContext:
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = StringIO()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        sys.stdout = self._stdout
+        if exc_type is not None:
+            return False

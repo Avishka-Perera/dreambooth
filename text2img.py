@@ -68,7 +68,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    output_dir = get_output_path(args.output_dir, "inf")
+    output_dir = get_output_path(args.output_dir, "run")
 
     txt2img(
         0,

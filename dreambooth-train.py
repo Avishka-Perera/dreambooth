@@ -101,7 +101,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    output_dir = get_output_path(args.output_dir, "train")
+    output_dir = get_output_path(args.output_dir, "run")
 
     # generate from class prompt
     class_img_dir = os.path.join(output_dir, "class-imgs")

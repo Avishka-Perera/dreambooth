@@ -129,7 +129,8 @@ class PLMSSampler(object):
         # sampling
         C, H, W = shape
         size = (batch_size, C, H, W)
-        print(f"Data shape for PLMS sampling is {size}")
+        if verbose:
+            print(f"Data shape for PLMS sampling is {size}")
 
         samples, intermediates = self.plms_sampling(
             conditioning,
@@ -148,6 +149,7 @@ class PLMSSampler(object):
             log_every_t=log_every_t,
             unconditional_guidance_scale=unconditional_guidance_scale,
             unconditional_conditioning=unconditional_conditioning,
+            verbose=verbose,
         )
         return samples, intermediates
 
@@ -171,6 +173,7 @@ class PLMSSampler(object):
         corrector_kwargs=None,
         unconditional_guidance_scale=1.0,
         unconditional_conditioning=None,
+        verbose=True,
     ):
         device = self.model.betas.device
         b = shape[0]
@@ -202,9 +205,12 @@ class PLMSSampler(object):
             else np.flip(timesteps)
         )
         total_steps = timesteps if ddim_use_original_steps else timesteps.shape[0]
-        print(f"Running PLMS Sampling with {total_steps} timesteps")
+        if verbose:
+            print(f"Running PLMS Sampling with {total_steps} timesteps")
 
-        iterator = tqdm(time_range, desc="PLMS Sampler", total=total_steps)
+        iterator = tqdm(
+            time_range, desc="PLMS Sampler", total=total_steps, disable=not verbose
+        )
         old_eps = []
 
         for i, step in enumerate(iterator):
