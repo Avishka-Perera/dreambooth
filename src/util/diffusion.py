@@ -1,23 +1,51 @@
+from omegaconf import OmegaConf
+from ..samplers import PLMSSampler
+from .io import load_model_from_config, export_imgs
+import os
 import torch
 import numpy as np
 from torch import autocast
 from contextlib import nullcontext
-from .io import export_imgs
 
 
-def sample_to_dir(
-    sampler,
+def txt2img(
+    rank,
+    world_size,
     prompt,
-    samples_dir,
-    HW,
+    output_dir,
+    hw,
     ddim_steps,
     scale,
     ddim_eta,
     batch_size,
-    count,
+    variations,
     precision,
 ):
-    H, W = HW
+
+    start_idx = int(variations / world_size * rank)
+    variations = (
+        variations - start_idx
+        if rank + 1 == world_size
+        else int(variations / world_size * (rank + 1)) - start_idx
+    )
+
+    samples_dir = os.path.join(output_dir, "samples")
+    if rank == 0:
+        os.makedirs(samples_dir, exist_ok=True)
+
+        with open(os.path.join(output_dir, "prompt.txt"), "w") as handler:
+            handler.write(prompt)
+
+    config_path = "configs/stable-diffusion-v1.yaml"
+    model_path = "weights/model.ckpt"
+
+    config = OmegaConf.load(config_path)
+    model = load_model_from_config(config, model_path)
+    model.cuda(rank)
+    model.cond_stage_model.device = rank
+    sampler = PLMSSampler(model)
+
+    H, W = hw
     C = 4
     f = 8
     start_code = None
@@ -28,11 +56,11 @@ def sample_to_dir(
     with torch.no_grad():
         with precision_scope("cuda"):
             with model.ema_scope():
-                while exported_count < count:
+                while exported_count < variations:
                     local_batch_size = (
                         batch_size
-                        if exported_count + batch_size <= count
-                        else count - exported_count
+                        if exported_count + batch_size <= variations
+                        else variations - exported_count
                     )
 
                     c = model.get_learned_conditioning([prompt] * local_batch_size)
@@ -60,6 +88,5 @@ def sample_to_dir(
                     x_samples_ddim = (
                         x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy() * 255
                     ).astype(np.uint8)
+                    export_imgs(x_samples_ddim, samples_dir, start_idx + exported_count)
                     exported_count += local_batch_size
-
-    export_imgs(x_samples_ddim, samples_dir)

@@ -1,10 +1,7 @@
 from argparse import ArgumentParser
-from src.util.io import get_output_path, load_model_from_config
-from src.util.diffusion import sample_to_dir
-from omegaconf import OmegaConf
-from src.samplers import PLMSSampler
-import os
+from src.util.diffusion import txt2img
 import ast
+from src.util.io import get_output_path
 
 
 def parse_args():
@@ -68,26 +65,16 @@ def parse_args():
     return parser.parse_args()
 
 
-def main(args):
+if __name__ == "__main__":
+    args = parse_args()
 
     output_dir = get_output_path(args.output_dir, "inf")
-    samples_dir = os.path.join(output_dir, "samples")
-    os.makedirs(samples_dir, exist_ok=True)
 
-    with open(os.path.join(output_dir, "prompt.txt"), "w") as handler:
-        handler.write(args.prompt)
-
-    config_path = "configs/v1-inference.yaml"
-    model_path = "weights/model.ckpt"
-
-    config = OmegaConf.load(config_path)
-    model = load_model_from_config(config, model_path)
-    sampler = PLMSSampler(model)
-
-    sample_to_dir(
-        sampler,
+    txt2img(
+        0,
+        1,
         args.prompt,
-        samples_dir,
+        output_dir,
         args.hw,
         args.ddim_steps,
         args.scale,
@@ -96,8 +83,3 @@ def main(args):
         args.variations,
         args.precision,
     )
-
-
-if __name__ == "__main__":
-    args = parse_args()
-    main(args)
