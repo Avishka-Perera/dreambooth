@@ -6,6 +6,7 @@ import os
 import sys
 from io import StringIO
 from contextlib import nullcontext
+from omegaconf import OmegaConf
 
 
 def get_output_path(root: str, lead: str):
@@ -21,7 +22,11 @@ def get_output_path(root: str, lead: str):
     return path
 
 
-def load_model_from_config(config, ckpt, verbose=False):
+def get_model(verbose=False):
+    config_path = "configs/stable-diffusion-v1.yaml"
+    ckpt = "weights/model.ckpt"
+
+    config = OmegaConf.load(config_path)
     if verbose:
         print(f"Loading model from {ckpt}")
     pl_sd = torch.load(ckpt, map_location="cpu")

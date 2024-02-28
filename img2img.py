@@ -1,5 +1,5 @@
 import numpy as np
-from src.util.io import get_output_path, load_img, load_model_from_config, export_imgs
+from src.util.io import get_output_path, load_img, get_model, export_imgs
 from omegaconf import OmegaConf
 from src.samplers import DDIMSampler
 import os, shutil
@@ -53,11 +53,7 @@ def parse_args():
 
 
 def main(args):
-    config_path = "configs/v1-inference.yaml"
-    model_path = "weights/model.ckpt"
-
-    config = OmegaConf.load(config_path)
-    model = load_model_from_config(config, model_path)
+    model = get_model()
     sampler = DDIMSampler(model)
 
     device = torch.device("cuda")

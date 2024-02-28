@@ -1,6 +1,6 @@
 from omegaconf import OmegaConf
 from ..samplers import PLMSSampler
-from .io import load_model_from_config, export_imgs
+from .io import get_model, export_imgs
 import os
 import torch
 import numpy as np
@@ -37,11 +37,7 @@ def txt2img(
         with open(os.path.join(output_dir, "prompt.txt"), "w") as handler:
             handler.write(prompt)
 
-    config_path = "configs/stable-diffusion-v1.yaml"
-    model_path = "weights/model.ckpt"
-
-    config = OmegaConf.load(config_path)
-    model = load_model_from_config(config, model_path, verbose)
+    model = get_model()
     model.cuda(rank)
     model.cond_stage_model.device = rank
     sampler = PLMSSampler(model)
