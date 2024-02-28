@@ -205,8 +205,8 @@ class PLMSSampler(object):
             else np.flip(timesteps)
         )
         total_steps = timesteps if ddim_use_original_steps else timesteps.shape[0]
-        if verbose:
-            print(f"Running PLMS Sampling with {total_steps} timesteps")
+        # if verbose:
+        #     print(f"Running PLMS Sampling with {total_steps} timesteps")
 
         iterator = tqdm(
             time_range, desc="PLMS Sampler", total=total_steps, disable=not verbose
