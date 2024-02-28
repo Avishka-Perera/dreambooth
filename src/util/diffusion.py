@@ -38,6 +38,7 @@ def txt2img(
             handler.write(prompt)
 
     model = get_model()
+    model.eval()
     model.cuda(rank)
     model.cond_stage_model.device = rank
     sampler = PLMSSampler(model)

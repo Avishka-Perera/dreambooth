@@ -15,6 +15,9 @@ def parse_args():
     parser = ArgumentParser()
 
     parser.add_argument(
+        "-d", "--device", type=int, default=0, help="The device to run the job"
+    )
+    parser.add_argument(
         "-p", "--prompt", type=str, required=True, help="Prompt to convert to image"
     )
     parser.add_argument(
@@ -54,9 +57,9 @@ def parse_args():
 
 def main(args):
     model = get_model()
+    model.eval()
+    model.to(args.device)
     sampler = DDIMSampler(model)
-
-    device = torch.device("cuda")
 
     output_dir = get_output_path(args.output_dir, "run")
     samples_dir = os.path.join(output_dir, "samples")
@@ -76,7 +79,7 @@ def main(args):
     scale = 5.0
 
     assert os.path.isfile(args.init_img)
-    init_image = load_img(args.init_img).to(device)
+    init_image = load_img(args.init_img).to(args.device)
     init_image = repeat(init_image, "1 ... -> b ...", b=batch_size)
     init_latent = model.get_first_stage_encoding(
         model.encode_first_stage(init_image)
@@ -104,7 +107,8 @@ def main(args):
 
                         # encode (scaled latent)
                         z_enc = sampler.stochastic_encode(
-                            init_latent, torch.tensor([t_enc] * batch_size).to(device)
+                            init_latent,
+                            torch.tensor([t_enc] * batch_size).to(args.device),
                         )
                         # decode it
                         samples = sampler.decode(

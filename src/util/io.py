@@ -46,8 +46,6 @@ def get_model(verbose=False):
         print("unexpected keys:")
         print(u)
 
-    model.cuda()
-    model.eval()
     return model
 
 
