@@ -52,7 +52,7 @@ def parse_args():
     parser.add_argument(
         "-o",
         "--output-dir",
-        default="out/dreambooth-train",
+        default="out/dreambooth",
         help="Directory to save outputs",
     )
     parser.add_argument(
