@@ -14,3 +14,5 @@ dependencies:
           - pytorch-lightning
           - einops
           - taming-transformers
+          # visualizations
+          - matplotlib
