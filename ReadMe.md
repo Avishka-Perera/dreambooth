@@ -30,8 +30,11 @@ This implementation is based on the ["High-Resolution Image Synthesis with Laten
 Use the script `text2img.py`
 
 ```bash
-python text2img.py -p "An Astronaut riding a bicycle in a beach" -v 4
+python text2img.py -p "Hide the pain Harold drinking tea" -v 4
 ```
+
+![txt2img](imgs/txt2img1.jpg)
+![txt2img](imgs/txt2img2.jpg)
 
 #### Image2Image
 
@@ -40,6 +43,8 @@ Use the script `img2img.py`
 ```bash
 python img2img.py -i imgs/bear.jpg -p "A realistic bear in it's natural habitat under the moon light. Cinematic lighting" -v 4
 ```
+
+![img2img](imgs/img2img.jpg)
 
 ### Acknowledgments
 
