@@ -1,4 +1,4 @@
-name: sd
+name: db
 channels:
     - defaults
 dependencies:
@@ -7,12 +7,12 @@ dependencies:
     - pip:
           - ipykernel
           - ipywidgets
-          - torch
-          - torchvision
-          - omegaconf
-          - transformers
-          - pytorch-lightning
-          - einops
-          - taming-transformers
+          - torch==2.2.1
+          - torchvision==0.17.1
+          - omegaconf==2.3.0
+          - transformers==4.38.2
+          - pytorch-lightning==2.2.1
+          - einops==0.7.0
+          - taming-transformers==0.0.1
           # visualizations
-          - matplotlib
+          - matplotlib==3.8.3

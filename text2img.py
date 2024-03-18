@@ -11,6 +11,9 @@ def parse_args():
         "-p", "--prompt", type=str, required=True, help="Prompt to convert to image"
     )
     parser.add_argument(
+        "-d", "--device", type=int, default=0, help="Device to run the process on"
+    )
+    parser.add_argument(
         "-b",
         "--batch-size",
         type=int,
@@ -71,7 +74,7 @@ if __name__ == "__main__":
     output_dir = get_output_path(args.output_dir, "run")
 
     txt2img(
-        0,
+        args.device,
         1,
         args.prompt,
         output_dir,
