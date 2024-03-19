@@ -1,5 +1,6 @@
+**.py[cod]
+**.log
 /temp**
 /weights
-**.py[cod]
 /out
 /data

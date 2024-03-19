@@ -168,59 +168,59 @@ if __name__ == "__main__":
         print("Class image exporting done!")
 
     device = args.devices[0]
-    ds = DreamBoothDataset(
-        os.path.join(class_img_dir, "samples"), args.instance_img_dir, args.hw
-    )
-    dl = DataLoader(ds, args.train_batch_size, shuffle=True)
 
+    # setup model
     model = get_model()
-    model.to(device)
     model.train()
+    model = model.to(device)
+    model.cond_stage_model.device = device
+    for nm, param in model.named_parameters():
+        assert param.device.index == device, (nm, param.device)
+    optimizer = Adam(model.model.parameters())
 
     freeze = [model.cond_stage_model, model.first_stage_model]
     for f_m in freeze:
         for param in f_m.parameters():
             param.requires_grad = False
-    optimizer = Adam(model.model.parameters())
 
+    # dataset
+    ds = DreamBoothDataset(
+        os.path.join(class_img_dir, "samples"), args.instance_img_dir, args.hw
+    )
+    dl = DataLoader(ds, 1)
     with torch.no_grad():
-        clas_prompt_enc = (
-            model.get_learned_conditioning(class_prompt)
-            .to(device)
-            .repeat(args.train_batch_size, 1, 1)
-            .to(torch.float16)
-        )
-        inst_prompt_enc = (
-            model.get_learned_conditioning(instance_prompt)
-            .to(device)
-            .repeat(args.train_batch_size, 1, 1)
-            .to(torch.float16)
-        )
+        clas_prompt_enc = model.get_learned_conditioning(class_prompt)
+        inst_prompt_enc = model.get_learned_conditioning(instance_prompt)
 
     ckpt_path = os.path.join(output_dir, "model.ckpt")
-    with tqdm(
-        total=args.epochs, postfix={"loss": "undefined"}, desc="Training"
-    ) as pbar:
-        for epoch in range(args.epochs):
-            for inst_img, clas_img in tqdm(dl, desc=f"EPOCH {epoch+1}/{args.epochs}"):
+    for epoch in range(args.epochs):
+        with tqdm(
+            total=len(dl),
+            postfix={"loss": "undefined"},
+            desc=f"EPOCH {epoch}/{args.epochs}",
+        ) as pbar:
+            for inst_img, clas_img in dl:
                 optimizer.zero_grad()
 
+                inst_img, clas_img = inst_img.to(device), clas_img.to(device)
                 # move to latent space
                 with torch.no_grad():
                     latent_inst_img = model.get_first_stage_encoding(
-                        model.encode_first_stage(inst_img.to(device))
+                        model.encode_first_stage(inst_img)
                     )
                     latent_clas_img = model.get_first_stage_encoding(
-                        model.encode_first_stage(clas_img.to(device))
+                        model.encode_first_stage(clas_img)
                     )
 
                 inst_loss, _ = model(latent_inst_img, inst_prompt_enc)
                 clas_loss, _ = model(latent_clas_img, clas_prompt_enc)
                 loss = inst_loss + args.lamb * clas_loss
+
                 loss.backward()
                 optimizer.step()
 
                 pbar.set_postfix({"loss": loss.cpu().item()})
+                pbar.update()
 
             torch.save(
                 {
@@ -230,7 +230,3 @@ if __name__ == "__main__":
                 },
                 ckpt_path,
             )
-
-            pbar.update()
-
-    print(f"Training comlpete! Weights saved to '{ckpt_path}'")
