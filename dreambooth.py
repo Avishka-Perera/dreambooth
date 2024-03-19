@@ -36,13 +36,6 @@ def parse_args():
         default=list(range(torch.cuda.device_count())),
     )
     parser.add_argument(
-        "-b",
-        "--batch-size",
-        type=int,
-        default=4,
-        help="Generation batch size",
-    )
-    parser.add_argument(
         "-v",
         "--variations",
         type=int,
@@ -56,6 +49,12 @@ def parse_args():
         help="Directory to save outputs",
     )
     parser.add_argument(
+        "-r",
+        "--resume-dir",
+        default=None,
+        help="Directory to start the job",
+    )
+    parser.add_argument(
         "--precision",
         type=str,
         help="evaluate at this precision",
@@ -64,6 +63,13 @@ def parse_args():
     )
 
     # generation parameters
+    parser.add_argument(
+        "--generation-batch-size",
+        "--gb",
+        type=int,
+        default=4,
+        help="Class image generation batch size",
+    )
     parser.add_argument(
         "--hw",
         type=ast.literal_eval,
@@ -92,6 +98,13 @@ def parse_args():
 
     # train parameters
     parser.add_argument(
+        "--train-batch-size",
+        "--tb",
+        type=int,
+        default=4,
+        help="Dreambooth training batch size",
+    )
+    parser.add_argument(
         "-l",
         "--lamb",
         type=float,
@@ -114,41 +127,51 @@ if __name__ == "__main__":
 
     assert os.path.exists(args.instance_img_dir)
 
-    output_dir = get_output_path(args.output_dir, "run")
-    os.makedirs(output_dir)
+    if args.resume_dir is None:
+        output_dir = get_output_path(args.output_dir, "run")
+        os.makedirs(output_dir)
+    else:
+        output_dir = args.resume_dir
+
+    class_prompt = f"A {args.class_name}"
+    instance_prompt = f"A sks {args.class_name}"
 
     # generate from class prompt
     class_img_dir = os.path.join(output_dir, "class-imgs")
-    class_prompt = f"A {args.class_name}"
-    instance_prompt = f"An sks {args.class_name}"
-    print(
-        f"Exporting class images for the prompt '{class_prompt}', to directory {class_img_dir}"
-    )
-    world_size = len(args.devices)
-    mp.spawn(
-        txt2img,
-        (
-            world_size,
-            class_prompt,
-            class_img_dir,
-            args.hw,
-            args.ddim_steps,
-            args.scale,
-            args.ddim_eta,
-            args.batch_size,
-            args.variations,
-            args.precision,
-        ),
-        nprocs=world_size,
-        join=True,
-    )
-    print("Class image exporting done!")
+    if os.path.exists(class_img_dir):
+        if len(os.listdir(os.path.join(class_img_dir, "samples"))) != args.variations:
+            raise NotImplementedError(
+                "Resuming of image generation not implemented yet"
+            )
+    else:
+        print(
+            f"Exporting class images for the prompt '{class_prompt}', to directory {class_img_dir}"
+        )
+        world_size = len(args.devices)
+        mp.spawn(
+            txt2img,
+            (
+                world_size,
+                class_prompt,
+                class_img_dir,
+                args.hw,
+                args.ddim_steps,
+                args.scale,
+                args.ddim_eta,
+                args.generation_batch_size,
+                args.variations,
+                args.precision,
+            ),
+            nprocs=world_size,
+            join=True,
+        )
+        print("Class image exporting done!")
 
     device = args.devices[0]
     ds = DreamBoothDataset(
         os.path.join(class_img_dir, "samples"), args.instance_img_dir, args.hw
     )
-    dl = DataLoader(ds, 1, shuffle=True)
+    dl = DataLoader(ds, args.train_batch_size, shuffle=True)
 
     model = get_model()
     model.to(device)
@@ -161,14 +184,26 @@ if __name__ == "__main__":
     optimizer = Adam(model.model.parameters())
 
     with torch.no_grad():
-        clas_prompt_enc = model.get_learned_conditioning(class_prompt).to(device)
-        inst_prompt_enc = model.get_learned_conditioning(instance_prompt).to(device)
+        clas_prompt_enc = (
+            model.get_learned_conditioning(class_prompt)
+            .to(device)
+            .repeat(args.train_batch_size, 1, 1)
+            .to(torch.float16)
+        )
+        inst_prompt_enc = (
+            model.get_learned_conditioning(instance_prompt)
+            .to(device)
+            .repeat(args.train_batch_size, 1, 1)
+            .to(torch.float16)
+        )
 
+    ckpt_path = os.path.join(output_dir, "model.ckpt")
     with tqdm(
         total=args.epochs, postfix={"loss": "undefined"}, desc="Training"
     ) as pbar:
         for epoch in range(args.epochs):
-            for inst_img, clas_img in dl:
+            for inst_img, clas_img in tqdm(dl, desc=f"EPOCH {epoch+1}/{args.epochs}"):
+                optimizer.zero_grad()
 
                 # move to latent space
                 with torch.no_grad():
@@ -182,15 +217,20 @@ if __name__ == "__main__":
                 inst_loss, _ = model(latent_inst_img, inst_prompt_enc)
                 clas_loss, _ = model(latent_clas_img, clas_prompt_enc)
                 loss = inst_loss + args.lamb * clas_loss
-
-                optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
                 pbar.set_postfix({"loss": loss.cpu().item()})
 
+            torch.save(
+                {
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "epoch": epoch,
+                },
+                ckpt_path,
+            )
+
             pbar.update()
 
-    ckpt_path = os.path.join(output_dir, "model.ckpt")
-    torch.save(model.state_dict(), ckpt_path)
     print(f"Training comlpete! Weights saved to '{ckpt_path}'")
