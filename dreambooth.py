@@ -9,6 +9,8 @@ from src.dataset import DreamBoothDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.optim import Adam
+from torch.utils.tensorboard import SummaryWriter
+import gc
 
 
 def parse_args():
@@ -98,11 +100,10 @@ def parse_args():
 
     # train parameters
     parser.add_argument(
-        "--train-batch-size",
-        "--tb",
-        type=int,
-        default=4,
-        help="Dreambooth training batch size",
+        "--learning-rate",
+        type=float,
+        default=5e-5,
+        help="Learning rate",
     )
     parser.add_argument(
         "-l",
@@ -115,8 +116,8 @@ def parse_args():
         "-e",
         "--epochs",
         type=int,
-        default=1000,
-        help="",
+        default=None,
+        help="Number of epochs to be trained. Defaults to the number of instance images",
     )
 
     return parser.parse_args()
@@ -152,6 +153,7 @@ if __name__ == "__main__":
             txt2img,
             (
                 world_size,
+                args.devices,
                 class_prompt,
                 class_img_dir,
                 args.hw,
@@ -165,6 +167,8 @@ if __name__ == "__main__":
             nprocs=world_size,
             join=True,
         )
+        gc.collect()
+        torch.cuda.empty_cache()
         print("Class image exporting done!")
 
     device = args.devices[0]
@@ -176,7 +180,7 @@ if __name__ == "__main__":
     model.cond_stage_model.device = device
     for nm, param in model.named_parameters():
         assert param.device.index == device, (nm, param.device)
-    optimizer = Adam(model.model.parameters())
+    optimizer = Adam(model.model.parameters(), lr=args.learning_rate)
 
     freeze = [model.cond_stage_model, model.first_stage_model]
     for f_m in freeze:
@@ -192,14 +196,20 @@ if __name__ == "__main__":
         clas_prompt_enc = model.get_learned_conditioning(class_prompt)
         inst_prompt_enc = model.get_learned_conditioning(instance_prompt)
 
-    ckpt_path = os.path.join(output_dir, "model.ckpt")
-    for epoch in range(args.epochs):
+    ckpt_dir = os.path.join(output_dir, "ckpts")
+    log_dir = os.path.join(output_dir, "logs")
+    os.makedirs(ckpt_dir, exist_ok=True)
+    os.makedirs(log_dir, exist_ok=True)
+    epochs = min(5, ds.instance_img_cnt) if args.epochs is None else args.epochs
+    tb_writer = SummaryWriter(log_dir)
+    data_len = len(dl)
+    for epoch in range(epochs):
         with tqdm(
-            total=len(dl),
+            total=data_len,
             postfix={"loss": "undefined"},
-            desc=f"EPOCH {epoch}/{args.epochs}",
+            desc=f"EPOCH {epoch+1}/{epochs}",
         ) as pbar:
-            for inst_img, clas_img in dl:
+            for i, (inst_img, clas_img) in enumerate(dl):
                 optimizer.zero_grad()
 
                 inst_img, clas_img = inst_img.to(device), clas_img.to(device)
@@ -219,14 +229,18 @@ if __name__ == "__main__":
                 loss.backward()
                 optimizer.step()
 
-                pbar.set_postfix({"loss": loss.cpu().item()})
+                loss = loss.cpu().item()
+                pbar.set_postfix({"loss": loss})
+                tb_writer.add_scalar("Loss", loss, i + epoch * data_len)
                 pbar.update()
 
             torch.save(
                 {
-                    "model": model.state_dict(),
+                    "state_dict": model.state_dict(),
                     "optimizer": optimizer.state_dict(),
                     "epoch": epoch,
                 },
-                ckpt_path,
+                os.path.join(ckpt_dir, f"e{epoch}.ckpt"),
             )
+
+    print("Training complete!")
