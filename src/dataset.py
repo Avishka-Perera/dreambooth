@@ -23,7 +23,7 @@ class RatioSaveResize(Module):
         if type(img) == torch.Tensor:
             *_, h, w = img.shape
         else:
-            h, w = img.size
+            w, h = img.size
 
         if w < h:
             new_w = int(self.size)
@@ -40,9 +40,12 @@ class DreamBoothDataset(Dataset):
         class_img_dir: str,
         instance_img_dir: str,
         hw: Tuple[int, int] = [512, 512],
+        class_img_count: int = -1,
     ) -> None:
-        self.class_imgs = glob.glob(f"{class_img_dir}/*")
-        self.instance_imgs = glob.glob(f"{instance_img_dir}/*")
+        self.class_imgs = sorted(glob.glob(f"{class_img_dir}/*"))
+        if class_img_count != -1:
+            self.class_imgs = self.class_imgs[:class_img_count]
+        self.instance_imgs = sorted(glob.glob(f"{instance_img_dir}/*"))
         self.class_img_cnt = len(self.class_imgs)
         self.instance_img_cnt = len(self.instance_imgs)
         self._len = max(self.class_img_cnt, self.instance_img_cnt)

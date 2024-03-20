@@ -116,8 +116,21 @@ def parse_args():
         "-e",
         "--epochs",
         type=int,
-        default=None,
-        help="Number of epochs to be trained. Defaults to the number of instance images",
+        default=1,
+        help="Number of epochs to be trained.",
+    )
+    parser.add_argument(
+        "--class-img-count",
+        type=int,
+        default=-1,
+        help="Number class images to use for training",
+    )
+    parser.add_argument(
+        "-s",
+        "--save-every",
+        type=int,
+        default=-1,
+        help="Save checkpoints after each this much of iterations",
     )
 
     return parser.parse_args()
@@ -189,7 +202,10 @@ if __name__ == "__main__":
 
     # dataset
     ds = DreamBoothDataset(
-        os.path.join(class_img_dir, "samples"), args.instance_img_dir, args.hw
+        os.path.join(class_img_dir, "samples"),
+        args.instance_img_dir,
+        args.hw,
+        class_img_count=args.class_img_count,
     )
     dl = DataLoader(ds, 1)
     with torch.no_grad():
@@ -200,8 +216,9 @@ if __name__ == "__main__":
     log_dir = os.path.join(output_dir, "logs")
     os.makedirs(ckpt_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
-    epochs = min(5, ds.instance_img_cnt) if args.epochs is None else args.epochs
+    epochs = args.epochs
     tb_writer = SummaryWriter(log_dir)
+    print("Starting Dreambooth training...")
     data_len = len(dl)
     for epoch in range(epochs):
         with tqdm(
@@ -232,6 +249,22 @@ if __name__ == "__main__":
                 loss = loss.cpu().item()
                 pbar.set_postfix({"loss": loss})
                 tb_writer.add_scalar("Loss", loss, i + epoch * data_len)
+
+                if (
+                    args.save_every != -1
+                    and (epoch * data_len + i) % args.save_every == 0
+                    and i != data_len - 1
+                    and (i != 0)
+                ):
+                    torch.save(
+                        {
+                            "state_dict": model.state_dict(),
+                            "optimizer": optimizer.state_dict(),
+                            "epoch": epoch,
+                        },
+                        os.path.join(ckpt_dir, f"e{epoch}i{i}.ckpt"),
+                    )
+
                 pbar.update()
 
             torch.save(
