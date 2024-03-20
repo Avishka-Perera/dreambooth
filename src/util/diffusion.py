@@ -6,11 +6,13 @@ import torch
 import numpy as np
 from torch import autocast
 from contextlib import nullcontext
+import gc
 
 
 def txt2img(
     rank,
     world_size,
+    devices,
     prompt,
     output_dir,
     hw,
@@ -20,8 +22,10 @@ def txt2img(
     batch_size,
     variations,
     precision,
+    ckpt_path="weights/model.ckpt",
 ):
     verbose = rank == 0
+    device = devices if type(devices) == int else devices[rank]
 
     start_idx = int(variations / world_size * rank)
     variations = (
@@ -37,10 +41,10 @@ def txt2img(
         with open(os.path.join(output_dir, "prompt.txt"), "w") as handler:
             handler.write(prompt)
 
-    model = get_model()
+    model = get_model(ckpt_path)
     model.eval()
-    model.cuda(rank)
-    model.cond_stage_model.device = rank
+    model.cuda(device)
+    model.cond_stage_model.device = device
     sampler = PLMSSampler(model)
 
     H, W = hw
@@ -88,3 +92,6 @@ def txt2img(
                     ).astype(np.uint8)
                     export_imgs(x_samples_ddim, samples_dir, start_idx + exported_count)
                     exported_count += local_batch_size
+
+    gc.collect()
+    torch.cuda.empty_cache()

@@ -21,6 +21,13 @@ def parse_args():
         help="Generation batch size",
     )
     parser.add_argument(
+        "-c",
+        "--ckpt-path",
+        type=str,
+        default="weights/model.ckpt",
+        help="Checkpoints path to the model",
+    )
+    parser.add_argument(
         "-v",
         "--variations",
         type=int,
@@ -74,8 +81,9 @@ if __name__ == "__main__":
     output_dir = get_output_path(args.output_dir, "run")
 
     txt2img(
-        args.device,
+        0,
         1,
+        args.device,
         args.prompt,
         output_dir,
         args.hw,
@@ -85,4 +93,5 @@ if __name__ == "__main__":
         args.batch_size if args.batch_size is not None else args.variations,
         args.variations,
         args.precision,
+        args.ckpt_path,
     )

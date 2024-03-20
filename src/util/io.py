@@ -22,9 +22,8 @@ def get_output_path(root: str, lead: str):
     return path
 
 
-def get_model(verbose=False):
+def get_model(ckpt="weights/model.ckpt", verbose=False):
     config_path = "configs/stable-diffusion-v1.yaml"
-    ckpt = "weights/model.ckpt"
 
     config = OmegaConf.load(config_path)
     if verbose:
