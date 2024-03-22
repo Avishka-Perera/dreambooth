@@ -27,10 +27,10 @@ This implementation is based on the ["High-Resolution Image Synthesis with Laten
 
 #### Text2Image
 
-Use the script `text2img.py`
+Use the script `txt2img.py`
 
 ```bash
-python text2img.py -p "Hide the pain Harold drinking tea" -v 4
+python txt2img.py -p "Hide the pain Harold drinking tea" -v 4
 ```
 
 ![txt2img](imgs/txt2img1.jpg)
