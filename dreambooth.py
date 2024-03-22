@@ -134,7 +134,7 @@ def parse_args():
         help="Save checkpoints after each this much of iterations",
     )
     parser.add_argument(
-        "t",
+        "-t",
         "--train-text-encoder",
         action="store_true",
         default=False,

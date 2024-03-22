@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from src.util.diffusion import txt2img
 import ast
 from src.util.io import get_output_path, save_args
+import os
 
 
 def parse_args():
@@ -79,6 +80,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     output_dir = get_output_path(args.output_dir, "run")
+    os.makedirs(output_dir)
     save_args(output_dir, args)
 
     txt2img(

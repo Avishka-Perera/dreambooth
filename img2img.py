@@ -62,9 +62,10 @@ def main(args):
     sampler = DDIMSampler(model)
 
     output_dir = get_output_path(args.output_dir, "run")
+    os.makedirs(output_dir)
     save_args(output_dir, args)
     samples_dir = os.path.join(output_dir, "samples")
-    os.makedirs(samples_dir, exist_ok=True)
+    os.makedirs(samples_dir)
 
     with open(os.path.join(output_dir, "prompt.txt"), "w") as handler:
         handler.write(args.prompt)
