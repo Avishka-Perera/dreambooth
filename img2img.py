@@ -1,5 +1,5 @@
 import numpy as np
-from src.util.io import get_output_path, load_img, get_model, export_imgs
+from src.util.io import get_output_path, load_img, get_model, export_imgs, save_args
 from omegaconf import OmegaConf
 from src.samplers import DDIMSampler
 import os, shutil
@@ -62,6 +62,7 @@ def main(args):
     sampler = DDIMSampler(model)
 
     output_dir = get_output_path(args.output_dir, "run")
+    save_args(output_dir, args)
     samples_dir = os.path.join(output_dir, "samples")
     os.makedirs(samples_dir, exist_ok=True)
 

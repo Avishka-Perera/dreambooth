@@ -8,6 +8,7 @@ from io import StringIO
 from contextlib import nullcontext
 from omegaconf import OmegaConf
 import glob
+import yaml
 
 
 def get_output_path(root: str, lead: str):
@@ -32,6 +33,12 @@ def get_args_path(dir):
         i += 1
     args_path = f"{dir}/args{i}.yaml"
     return args_path
+
+
+def save_args(output_dir, args):
+    args_save_path = get_args_path(output_dir)
+    with open(args_save_path, "w") as handler:
+        yaml.dump(vars(args), handler)
 
 
 def get_model(ckpt="weights/model.ckpt", verbose=False):

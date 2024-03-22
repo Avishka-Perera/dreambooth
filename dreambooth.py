@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import ast
 import os
 from src.util.diffusion import txt2img
-from src.util.io import get_output_path, get_args_path, get_model
+from src.util.io import get_output_path, save_args, get_model
 import torch
 from torch import multiprocessing as mp
 from src.dataset import DreamBoothDataset
@@ -154,11 +154,7 @@ if __name__ == "__main__":
         os.makedirs(output_dir)
     else:
         output_dir = args.resume_dir
-
-    # save arguments
-    args_save_path = get_args_path(output_dir)
-    with open(args_save_path, "w") as handler:
-        yaml.dump(vars(args), handler)
+    save_args(output_dir, args)
 
     class_prompt = f"A {args.class_name}"
     instance_prompt = f"A sks {args.class_name}"
