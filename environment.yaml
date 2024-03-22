@@ -5,8 +5,6 @@ dependencies:
     - python=3.10
     - pip=23.3.1
     - pip:
-          - ipykernel
-          - ipywidgets
           - torch==2.2.1
           - torchvision==0.17.1
           - omegaconf==2.3.0
@@ -16,3 +14,5 @@ dependencies:
           - taming-transformers==0.0.1
           # visualizations
           - matplotlib==3.8.3
+          - ipykernel
+          - ipywidgets
