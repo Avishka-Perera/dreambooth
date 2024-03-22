@@ -281,7 +281,7 @@ if __name__ == "__main__":
 
             if (
                 args.save_every != -1
-                and i % args.save_every == 0
+                and (i + start_it) % args.save_every == 0
                 and i + start_it != data_len - 1
                 and (i != 0)
             ):
@@ -291,7 +291,7 @@ if __name__ == "__main__":
                         "optimizer": optimizer.state_dict(),
                         "iteration": i + start_it,
                     },
-                    os.path.join(ckpt_dir, f"i{i+start_it}.ckpt"),
+                    os.path.join(ckpt_dir, f"i{i+start_it:>05}.ckpt"),
                 )
 
             pbar.update()
@@ -302,7 +302,7 @@ if __name__ == "__main__":
                 "optimizer": optimizer.state_dict(),
                 "iteration": i + start_it,
             },
-            os.path.join(ckpt_dir, f"i{i+start_it}.ckpt"),
+            os.path.join(ckpt_dir, f"i{i+start_it:>05}.ckpt"),
         )
 
     print("Training complete!")

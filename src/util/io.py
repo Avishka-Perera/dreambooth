@@ -9,6 +9,7 @@ from contextlib import nullcontext
 from omegaconf import OmegaConf
 import glob
 import yaml
+from ..constants import default_ckpt_path, config_path
 
 
 def get_output_path(root: str, lead: str):
@@ -41,8 +42,7 @@ def save_args(output_dir, args):
         yaml.dump(vars(args), handler)
 
 
-def get_model(ckpt="weights/model.ckpt", verbose=False):
-    config_path = "configs/stable-diffusion-v1.yaml"
+def get_model(ckpt=default_ckpt_path, verbose=False):
 
     config = OmegaConf.load(config_path)
     if verbose:

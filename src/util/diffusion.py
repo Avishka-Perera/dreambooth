@@ -7,6 +7,7 @@ import numpy as np
 from torch import autocast
 from contextlib import nullcontext
 import gc
+from ..constants import default_ckpt_path
 
 
 def txt2img(
@@ -22,7 +23,7 @@ def txt2img(
     batch_size,
     variations,
     precision,
-    ckpt_path="weights/model.ckpt",
+    ckpt_path=default_ckpt_path,
 ):
     verbose = rank == 0
     device = devices if type(devices) == int else devices[rank]

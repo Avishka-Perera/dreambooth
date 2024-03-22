@@ -3,6 +3,7 @@ from src.util.diffusion import txt2img
 import ast
 from src.util.io import get_output_path, save_args
 import os
+from src.constants import default_ckpt_path
 
 
 def parse_args():
@@ -25,7 +26,7 @@ def parse_args():
         "-c",
         "--ckpt-path",
         type=str,
-        default="weights/model.ckpt",
+        default=default_ckpt_path,
         help="Checkpoints path to the model",
     )
     parser.add_argument(
@@ -83,6 +84,11 @@ if __name__ == "__main__":
     os.makedirs(output_dir)
     save_args(output_dir, args)
 
+    initiation_msg = f"Starting image generation with prompt '{args.prompt}'"
+    if args.ckpt_path != default_ckpt_path:
+        initiation_msg += f" with weights '{args.ckpt_path}'"
+    print(initiation_msg)
+
     txt2img(
         0,
         1,
@@ -98,3 +104,5 @@ if __name__ == "__main__":
         args.precision,
         args.ckpt_path,
     )
+
+    print("Job complete!\n")
