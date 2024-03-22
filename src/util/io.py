@@ -45,24 +45,25 @@ def save_args(output_dir, args):
 def get_model(ckpt=default_ckpt_path, verbose=False):
 
     config = OmegaConf.load(config_path)
-    if verbose:
-        print(f"Loading model from {ckpt}")
-    pl_sd = torch.load(ckpt, map_location="cpu")
-    if "global_step" in pl_sd and verbose:
-        print(f"Global Step: {pl_sd['global_step']}")
-    sd = pl_sd["state_dict"]
-
     context = nullcontext if verbose else PrintSuppressContext
     with context():
         model = instantiate_from_config(config.model)
 
-    m, u = model.load_state_dict(sd, strict=False)
-    if len(m) > 0 and verbose:
-        print("missing keys:")
-        print(m)
-    if len(u) > 0 and verbose:
-        print("unexpected keys:")
-        print(u)
+    if ckpt is not None:
+        if verbose:
+            print(f"Loading model from {ckpt}")
+        pl_sd = torch.load(ckpt, map_location="cpu")
+        if "global_step" in pl_sd and verbose:
+            print(f"Global Step: {pl_sd['global_step']}")
+        sd = pl_sd["state_dict"]
+
+        m, u = model.load_state_dict(sd, strict=False)
+        if len(m) > 0 and verbose:
+            print("missing keys:")
+            print(m)
+        if len(u) > 0 and verbose:
+            print("unexpected keys:")
+            print(u)
 
     return model
 
