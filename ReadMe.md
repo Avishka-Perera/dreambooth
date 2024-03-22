@@ -72,7 +72,7 @@ Depending on the GPU RAM, users may select to also train the text encoder (using
 
 ## Results
 
-A Stable Diffusion model was trained using the Dreambooth algorithm. The learning rate was set to $10^{-5}$ and $\lambda$ was set to 1.5. The model was trained up to 700 iterations. From there on, weights were saved until 725 with intervals of 5 resulting in 6 checkpoints. It was observed that for different prompts, different checkpoints within this set performed well. The training process took a total of 25 minutes on an Nvidia 24 GB Quadro RTX 6000 graphics card.
+A Stable Diffusion model was trained using the Dreambooth algorithm. The learning rate was set to $10^{-5}$ and $\lambda$ was set to 1.5. Due to computational limitations, the CLIP encoder was kept unchanged. The model was trained up to 700 iterations. From there on, weights were saved until 725 with intervals of 5 resulting in 6 checkpoints. It was observed that for different prompts, different checkpoints within this set performed well. The training process took a total of 25 minutes on an Nvidia 24 GB Quadro RTX 6000 graphics card.
 
 ![input images](imgs/dreambooth-input.jpg)
 
