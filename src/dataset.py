@@ -41,6 +41,7 @@ class DreamBoothDataset(Dataset):
         instance_img_dir: str,
         hw: Tuple[int, int] = [512, 512],
         class_img_count: int = -1,
+        length=None,
     ) -> None:
         self.class_imgs = sorted(glob.glob(f"{class_img_dir}/*"))
         if class_img_count != -1:
@@ -48,7 +49,9 @@ class DreamBoothDataset(Dataset):
         self.instance_imgs = sorted(glob.glob(f"{instance_img_dir}/*"))
         self.class_img_cnt = len(self.class_imgs)
         self.instance_img_cnt = len(self.instance_imgs)
-        self._len = max(self.class_img_cnt, self.instance_img_cnt)
+        self._len = (
+            max(self.class_img_cnt, self.instance_img_cnt) if length is None else length
+        )
         self.trans = Compose(
             [
                 RatioSaveResize(min(hw)),

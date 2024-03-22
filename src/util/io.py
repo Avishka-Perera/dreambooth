@@ -7,6 +7,7 @@ import sys
 from io import StringIO
 from contextlib import nullcontext
 from omegaconf import OmegaConf
+import glob
 
 
 def get_output_path(root: str, lead: str):
@@ -20,6 +21,17 @@ def get_output_path(root: str, lead: str):
         path = os.path.join(root, f"{lead}0")
 
     return path
+
+
+def get_args_path(dir):
+    args_paths = glob.glob(f"{dir}/args**.yaml")
+    if len(args_paths) == 0:
+        return f"{dir}/args.yaml"
+    i = 2
+    while f"{dir}/args{i}.yaml" in args_paths:
+        i += 1
+    args_path = f"{dir}/args{i}.yaml"
+    return args_path
 
 
 def get_model(ckpt="weights/model.ckpt", verbose=False):
