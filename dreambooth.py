@@ -133,6 +133,13 @@ def parse_args():
         default=-1,
         help="Save checkpoints after each this much of iterations",
     )
+    parser.add_argument(
+        "t",
+        "--train-text-encoder",
+        action="store_true",
+        default=False,
+        help="Whether to train the text encoder",
+    )
 
     return parser.parse_args()
 
@@ -206,7 +213,12 @@ if __name__ == "__main__":
     model.cond_stage_model.device = device
     for nm, param in model.named_parameters():
         assert param.device.index == device, (nm, param.device)
-    optimizer = Adam(model.model.parameters(), lr=args.learning_rate)
+    optim_params = (
+        (*model.model.parameters(), *model.cond_stage_model.parameters())
+        if args.train_text_encoder
+        else model.model.parameters()
+    )
+    optimizer = Adam(optim_params, lr=args.learning_rate)
     latest_ckpt_path = get_latest_ckpt(ckpt_dir)
     if args.resume_dir is not None and latest_ckpt_path is not None:
         print(f"Loading checkpoint from {latest_ckpt_path}")
@@ -217,7 +229,11 @@ if __name__ == "__main__":
     else:
         start_it = 0
 
-    freeze = [model.cond_stage_model, model.first_stage_model]
+    freeze = (
+        [model.first_stage_model]
+        if args.train_text_encoder
+        else [model.cond_stage_model, model.first_stage_model]
+    )
     for f_m in freeze:
         for param in f_m.parameters():
             param.requires_grad = False
