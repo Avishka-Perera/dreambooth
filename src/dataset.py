@@ -4,6 +4,7 @@ from torchvision.transforms import (
     ToTensor,
     Lambda,
     functional as F,
+    RandomHorizontalFlip,
 )
 from torch.utils.data import Dataset
 import glob
@@ -12,25 +13,29 @@ from torch import Tensor
 from PIL import Image
 from torch.nn import Module
 import torch
+import random
 
 
-class RatioSaveResize(Module):
-    def __init__(self, size: float) -> None:
+class RatioSaveRandomResize(Module):
+    def __init__(self, size: float, u_variance) -> None:
         super().__init__()
         self.size = size
+        self.u_variance = u_variance
 
     def forward(self, img):
+        scale = random.random() * (self.u_variance) + 1
+        size = self.size * scale
         if type(img) == torch.Tensor:
             *_, h, w = img.shape
         else:
             w, h = img.size
 
         if w < h:
-            new_w = int(self.size)
-            new_h = int(h / w * self.size)
+            new_w = int(size)
+            new_h = int(h / w * size)
         else:
-            new_h = int(self.size)
-            new_w = int(w / h * self.size)
+            new_h = int(size)
+            new_w = int(w / h * size)
         return F.resize(img, [new_h, new_w])
 
 
@@ -41,8 +46,11 @@ class DreamBoothDataset(Dataset):
         instance_img_dir: str,
         hw: Tuple[int, int] = [512, 512],
         class_img_count: int = -1,
+        pre_crop_scale: float = 1.1,
         length=None,
     ) -> None:
+        assert pre_crop_scale >= 1
+
         self.class_imgs = sorted(glob.glob(f"{class_img_dir}/*"))
         if class_img_count != -1:
             self.class_imgs = self.class_imgs[:class_img_count]
@@ -52,9 +60,11 @@ class DreamBoothDataset(Dataset):
         self._len = (
             max(self.class_img_cnt, self.instance_img_cnt) if length is None else length
         )
+
         self.trans = Compose(
             [
-                RatioSaveResize(min(hw)),
+                RandomHorizontalFlip(),
+                RatioSaveRandomResize(min(hw), pre_crop_scale - 1),
                 CenterCrop(hw),
                 ToTensor(),
                 Lambda(lambda x: x * 2 - 1),
