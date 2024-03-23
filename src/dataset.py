@@ -5,6 +5,7 @@ from torchvision.transforms import (
     Lambda,
     functional as F,
     RandomHorizontalFlip,
+    ColorJitter,
 )
 from torch.utils.data import Dataset
 import glob
@@ -66,6 +67,7 @@ class DreamBoothDataset(Dataset):
                 RandomHorizontalFlip(),
                 RatioSaveRandomResize(min(hw), pre_crop_scale - 1),
                 CenterCrop(hw),
+                ColorJitter(0.3, 0.3, 0.3),
                 ToTensor(),
                 Lambda(lambda x: x * 2 - 1),
             ]
