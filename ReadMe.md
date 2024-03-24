@@ -1,5 +1,9 @@
 # Dreambooth
 
+Dreambooth is an algorithm for fine-tuning text-to-image diffusion models for subject-driven generation. This was a work by Google Research in 2023. Dreambooth personalizes a diffusion model by "implanting" a (unique identifier, subject) pair to the model's output space using a very small set of subject images.
+
+In this work, inferencing of Stable Diffusion has been replicated using the original work of [Stable Diffusion](https://github.com/CompVis/stable-diffusion/) for text-to-image generation and text-guided image-to-image translation. Then the Dreambooth algorithm was implemented from scratch.
+
 ## Setup
 
 ### Create the Environment
@@ -55,8 +59,6 @@ python img2img.py -i imgs/bear.jpg -p "A realistic bear in it's natural habitat 
 Please note that most of the source codes are burrowed from the [official Stable Diffusion Repository](https://github.com/CompVis/stable-diffusion).
 
 ## Dreambooth
-
-Dreambooth is an algorithm for fine-tuning text-to-image diffusion models for subject-driven generation. This was a work by Google Research in 2023. Dreambooth personalizes a diffusion model by "implanting" a (unique identifier, subject) pair to the model's output space using a very small set of subject images.
 
 To start the training, users will have to collect a set of images of the subject and determine a suitable class name. Once they have been satisfied, users can invoke the Dreambooth script at `dreambooth.py`. For example,
 
