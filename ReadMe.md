@@ -1,4 +1,4 @@
-# Dreambooth Re-Implementation with Pytorch
+# Dreambooth
 
 ## Setup
 
@@ -54,7 +54,7 @@ python img2img.py -i imgs/bear.jpg -p "A realistic bear in it's natural habitat 
 
 Please note that most of the source codes are burrowed from the [official Stable Diffusion Repository](https://github.com/CompVis/stable-diffusion).
 
-# Dreambooth
+## Dreambooth
 
 Dreambooth is an algorithm for fine-tuning text-to-image diffusion models for subject-driven generation. This was a work by Google Research in 2023. Dreambooth personalizes a diffusion model by "implanting" a (unique identifier, subject) pair to the model's output space using a very small set of subject images.
 
@@ -70,7 +70,7 @@ After this training, the subject will be known by the diffusion model with the n
 
 Depending on the GPU RAM, users may select to also train the text encoder (using the `-t` flag) and select training in a higher precision (using the `--precision` flag) to obtain better results.
 
-## Results
+### Results
 
 A Stable Diffusion model was trained using the Dreambooth algorithm. The learning rate was set to $10^{-5}$ and $\lambda$ was set to 1.5. Due to computational limitations, the CLIP encoder was kept unchanged. The model was trained up to 700 iterations. From there on, weights were saved until 725 with intervals of 5 resulting in 6 checkpoints. It was observed that for different prompts, different checkpoints within this set performed well. The training process took a total of 25 minutes on an Nvidia 24 GB Quadro RTX 6000 graphics card.
 
