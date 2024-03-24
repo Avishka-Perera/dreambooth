@@ -123,7 +123,7 @@ def parse_args():
     parser.add_argument(
         "--iterations",
         type=int,
-        default=None,
+        default=1000,
         help="Number of iterations to be trained.",
     )
     parser.add_argument(
@@ -242,7 +242,7 @@ if __name__ == "__main__":
         class_img_count=args.class_img_count,
         length=args.iterations - start_it,
     )
-    dl = DataLoader(ds, 1)
+    dl = DataLoader(ds, 1, shuffle=True)
     with torch.no_grad():
         clas_prompt_enc = model.get_learned_conditioning(class_prompt)
         inst_prompt_enc = model.get_learned_conditioning(instance_prompt)

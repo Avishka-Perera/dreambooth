@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 import glob
 from typing import Tuple
 from torch import Tensor
-from PIL import Image
+from PIL import Image, ImageOps
 from torch.nn import Module
 import torch
 import random
@@ -80,7 +80,11 @@ class DreamBoothDataset(Dataset):
         inst_path = self.instance_imgs[index % self.instance_img_cnt]
         clas_path = self.class_imgs[index % self.class_img_cnt]
 
-        inst_img = self.trans(Image.open(inst_path))
-        clas_img = self.trans(Image.open(clas_path))
+        inst_img = self.trans(
+            ImageOps.exif_transpose(Image.open(inst_path)).convert("RGB")
+        )
+        clas_img = self.trans(
+            ImageOps.exif_transpose(Image.open(clas_path)).convert("RGB")
+        )
 
         return inst_img, clas_img
